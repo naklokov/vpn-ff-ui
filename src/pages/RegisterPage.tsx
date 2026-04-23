@@ -10,7 +10,6 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { PhoneField } from "../components/PhoneField";
-import { MOCK_API } from "../config";
 import { registerUser } from "../model/authModel";
 import {
   registerFormSchema,
@@ -22,7 +21,6 @@ export function RegisterPage() {
   const referralUserLogin = searchParams.get("referralUserLogin") ?? "";
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
-  const [verifyToken, setVerifyToken] = React.useState<string | undefined>();
   const [submitting, setSubmitting] = React.useState(false);
 
   const {
@@ -43,17 +41,15 @@ export function RegisterPage() {
   const onSubmit = handleSubmit(async (data) => {
     setError(null);
     setSuccess(null);
-    setVerifyToken(undefined);
     setSubmitting(true);
     try {
-      const res = await registerUser(
+      await registerUser(
         data.email,
         data.phone,
         data.password,
         data.referralUserLogin,
       );
       setSuccess("Регистрация успешна. Пользователь создан в системе.");
-      setVerifyToken(res.verifyToken);
     } catch (e) {
       const error = e as any;
       setError(error?.message || "Ошибка регистрации");
@@ -174,12 +170,6 @@ export function RegisterPage() {
           </Button>
         </Typography>
 
-        {MOCK_API && verifyToken ? (
-          <Alert severity="info">
-            Для теста откройте ссылку:{" "}
-            <code>/verify-email?token={verifyToken}</code>
-          </Alert>
-        ) : null}
       </Stack>
     </Container>
   );

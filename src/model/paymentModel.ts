@@ -1,12 +1,5 @@
 import { checkPaymentApi, createPaymentApi } from "../api/paymentApi";
-import { MOCK_API } from "../config";
 import { normalizeRuPhone } from "./phone";
-
-function delay(ms: number) {
-  return new Promise<void>((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
 
 const ALLOWED_MIME = new Set([
   "application/pdf",
@@ -53,11 +46,6 @@ export async function submitPaymentReceipt(
   const formData = new FormData();
   formData.append("phone", normalized);
   formData.append("receipt", receipt);
-
-  if (MOCK_API) {
-    await delay(600);
-    return { paymentId: "mock-payment-id" };
-  }
 
   const fileBase64 = await fileToBase64(receipt);
   const check = await checkPaymentApi(
