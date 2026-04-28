@@ -19,18 +19,81 @@ import { RegisterPage } from './pages/RegisterPage';
 const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#1565c0' },
-    secondary: { main: '#00838f' },
+    primary: { main: '#cc2230' },
+    secondary: { main: '#6f89a2' },
+    background: {
+      default: '#f4f7fb',
+      paper: '#ffffff',
+    },
+    text: {
+      primary: '#2a2530',
+      secondary: '#665f68',
+    },
   },
-  shape: { borderRadius: 10 },
+  shape: { borderRadius: 6 },
+  typography: {
+    fontFamily:
+      '"Inter","SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
+    h6: {
+      fontWeight: 700,
+      letterSpacing: '0.01em',
+    },
+    button: {
+      textTransform: 'none',
+      fontWeight: 600,
+    },
+  },
+  components: {
+    MuiAppBar: {
+      styleOverrides: {
+        root: {
+          backdropFilter: 'blur(8px)',
+          backgroundColor: 'rgba(255, 255, 255, 0.86)',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+          paddingInline: 16,
+        },
+        containedPrimary: {
+          boxShadow: 'none',
+        },
+      },
+    },
+    MuiTextField: {
+      defaultProps: {
+        variant: 'outlined',
+      },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          borderRadius: 6,
+        },
+      },
+    },
+  },
 });
 
 function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-      <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <AppBar
+        position="sticky"
+        color="inherit"
+        elevation={0}
+        sx={{ borderBottom: 1, borderColor: 'divider' }}
+      >
         <Toolbar sx={{ gap: 2 }}>
-          <Typography variant="h6" component={RouterLink} to="/register" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to="/register"
+            sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}
+          >
             VPN FF
           </Typography>
           <Button component={RouterLink} to="/register" color="inherit" size="small">
