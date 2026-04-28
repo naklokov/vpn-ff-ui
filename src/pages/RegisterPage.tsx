@@ -163,13 +163,12 @@ export function RegisterPage() {
           </Stack>
         </Box>
 
-        <Typography variant="body2" color="text.secondary">
+        {/* <Typography variant="body2" color="text.secondary">
           Уже есть аккаунт?{" "}
           <Button component={RouterLink} to="/login" size="small">
             На страницу входа
           </Button>
-        </Typography>
-
+        </Typography> */}
       </Stack>
     </Container>
   );

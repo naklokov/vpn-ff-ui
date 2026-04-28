@@ -14,12 +14,7 @@ import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { HomePage } from './pages/HomePage';
-import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
-import { VerifyEmailPage } from './pages/VerifyEmailPage';
-import { RequireAuth } from './components/RequireAuth';
-import { PaymentPage } from './pages/PaymentPage';
 
 const theme = createTheme({
   palette: {
@@ -35,20 +30,11 @@ function AppShell({ children }: { children: React.ReactNode }) {
     <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
       <AppBar position="sticky" color="inherit" elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
         <Toolbar sx={{ gap: 2 }}>
-          <Typography variant="h6" component={RouterLink} to="/" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
+          <Typography variant="h6" component={RouterLink} to="/register" sx={{ flexGrow: 1, textDecoration: 'none', color: 'inherit' }}>
             VPN FF
           </Typography>
-          <Button component={RouterLink} to="/" color="inherit" size="small">
-            Главная
-          </Button>
-          <Button component={RouterLink} to="/login" color="inherit" size="small">
-            Вход
-          </Button>
           <Button component={RouterLink} to="/register" color="inherit" size="small">
             Регистрация
-          </Button>
-          <Button component={RouterLink} to="/payment" color="inherit" size="small">
-            Оплата
           </Button>
         </Toolbar>
       </AppBar>
@@ -68,19 +54,9 @@ function App() {
       <BrowserRouter>
         <AppShell>
           <Routes>
-            <Route
-              path="/"
-              element={
-                <RequireAuth>
-                  <HomePage />
-                </RequireAuth>
-              }
-            />
-            <Route path="/login" element={<LoginPage />} />
+            <Route path="/" element={<Navigate to="/register" replace />} />
             <Route path="/register" element={<RegisterPage />} />
-            <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/verify-email" element={<VerifyEmailPage />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<Navigate to="/register" replace />} />
           </Routes>
         </AppShell>
       </BrowserRouter>

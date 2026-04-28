@@ -64,9 +64,10 @@ export async function registerUser(
 ): Promise<void> {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPhone = normalizeRuPhone(phone);
+  const referralDigits = (referralUserLogin ?? "").replace(/\D/g, "");
   const normalizedReferralUserLogin =
-    referralUserLogin && referralUserLogin.trim()
-      ? normalizeRuPhone(referralUserLogin)
+    referralDigits.length > 1
+      ? normalizeRuPhone(referralUserLogin ?? "")
       : undefined;
 
   await registerApi(
