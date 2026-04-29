@@ -117,11 +117,18 @@ export function PaymentPage() {
 
   const copyPaymentPhone = async () => {
     try {
+      if (!PAYMENT_PHONE) {
+        throw new Error("Номер телефона для оплаты не установлен");
+      }
       await navigator.clipboard.writeText(PAYMENT_PHONE);
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
-    } catch {
-      setError("Не удалось скопировать номер. Скопируйте вручную.");
+    } catch (e) {
+      setError(
+        e instanceof Error
+          ? e.message
+          : "Не удалось скопировать номер. Скопируйте вручную.",
+      );
     }
   };
 
