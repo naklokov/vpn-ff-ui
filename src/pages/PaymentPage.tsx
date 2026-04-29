@@ -258,6 +258,10 @@ export function PaymentPage() {
                 <Typography variant="body2" fontWeight={700}>
                   В случае перевода на другой банк, платёж проведён НЕ БУДЕТ
                 </Typography>
+                <Typography variant="body2" fontWeight={700}>
+                  После оплаты ОБЯЗАТЕЛЬНО приложите чек в PDF формате в поле
+                  ниже, иначе платёж проведён НЕ БУДЕТ
+                </Typography>
                 <Button
                   variant="outlined"
                   size="small"
@@ -287,7 +291,7 @@ export function PaymentPage() {
                   Приложите квитанцию или скриншот об оплате
                 </Typography>
                 <Button variant="outlined" component="label">
-                  Выбрать файл (PDF или фото)
+                  Выбрать чек
                   <input
                     type="file"
                     hidden
@@ -359,7 +363,9 @@ export function PaymentPage() {
         <DialogTitle>Ваша оплата успешно принята</DialogTitle>
         <DialogContent>
           <Stack spacing={1}>
-            <Typography>Доступ продлён на {successPeriod ?? period} мес.</Typography>
+            <Typography>
+              Доступ продлён на {successPeriod ?? period} мес.
+            </Typography>
             <Typography>
               Обновите подписку в приложении в котором вы используете VPN
             </Typography>
