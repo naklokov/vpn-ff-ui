@@ -89,87 +89,87 @@ export function RegisterPage() {
 
         <Box component="form" onSubmit={onSubmit} noValidate>
           <Stack spacing={2}>
-                <Controller
-                  name="email"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Email"
-                      type="email"
-                      error={Boolean(errors.email)}
-                      helperText={errors.email?.message}
-                      fullWidth
-                    />
-                  )}
+            <Controller
+              name="email"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Email"
+                  type="email"
+                  error={Boolean(errors.email)}
+                  helperText={errors.email?.message}
+                  fullWidth
                 />
+              )}
+            />
 
-                <Controller
-                  name="phone"
-                  control={control}
-                  render={({ field }) => (
-                    <PhoneField
-                      label="Телефон"
-                      name={field.name}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      inputRef={field.ref}
-                      error={Boolean(errors.phone)}
-                      helperText={errors.phone?.message}
-                      autoComplete="tel"
-                    />
-                  )}
+            <Controller
+              name="phone"
+              control={control}
+              render={({ field }) => (
+                <PhoneField
+                  label="Телефон"
+                  name={field.name}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  inputRef={field.ref}
+                  error={Boolean(errors.phone)}
+                  helperText={errors.phone?.message}
+                  autoComplete="tel"
                 />
+              )}
+            />
 
-                <Controller
-                  name="password"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Пароль"
-                      type="password"
-                      error={Boolean(errors.password)}
-                      helperText={errors.password?.message}
-                      fullWidth
-                    />
-                  )}
+            <Controller
+              name="password"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Пароль"
+                  type="password"
+                  error={Boolean(errors.password)}
+                  helperText={errors.password?.message}
+                  fullWidth
                 />
+              )}
+            />
 
-                <Controller
-                  name="confirmPassword"
-                  control={control}
-                  render={({ field }) => (
-                    <TextField
-                      {...field}
-                      label="Подтверждение пароля"
-                      type="password"
-                      error={Boolean(errors.confirmPassword)}
-                      helperText={errors.confirmPassword?.message}
-                      fullWidth
-                    />
-                  )}
+            <Controller
+              name="confirmPassword"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Подтверждение пароля"
+                  type="password"
+                  error={Boolean(errors.confirmPassword)}
+                  helperText={errors.confirmPassword?.message}
+                  fullWidth
                 />
+              )}
+            />
 
-                <Controller
-                  name="referralUserLogin"
-                  control={control}
-                  render={({ field }) => (
-                    <PhoneField
-                      label="Номер пользователя, который пригласил вас"
-                      name={field.name}
-                      value={field.value}
-                      onChange={field.onChange}
-                      onBlur={field.onBlur}
-                      inputRef={field.ref}
-                      error={Boolean(errors.referralUserLogin)}
-                      helperText={errors.referralUserLogin?.message}
-                      autoComplete="tel"
-                      fullWidth
-                    />
-                  )}
+            <Controller
+              name="referralUserLogin"
+              control={control}
+              render={({ field }) => (
+                <PhoneField
+                  label="Номер пользователя, который пригласил вас (необязательно)"
+                  name={field.name}
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  inputRef={field.ref}
+                  error={Boolean(errors.referralUserLogin)}
+                  helperText={errors.referralUserLogin?.message}
+                  autoComplete="tel"
+                  fullWidth
                 />
+              )}
+            />
 
             <Button
               type="submit"
