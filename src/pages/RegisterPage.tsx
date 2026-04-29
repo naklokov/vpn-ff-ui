@@ -124,7 +124,6 @@ export function RegisterPage() {
                       {...field}
                       label="Email"
                       type="email"
-                      size="small"
                       error={Boolean(errors.email)}
                       helperText={errors.email?.message}
                       fullWidth
@@ -144,7 +143,6 @@ export function RegisterPage() {
                       onBlur={field.onBlur}
                       inputRef={field.ref}
                       error={Boolean(errors.phone)}
-                      size="small"
                       helperText={errors.phone?.message}
                       autoComplete="tel"
                     />
@@ -160,7 +158,6 @@ export function RegisterPage() {
                       label="Пароль"
                       type="password"
                       error={Boolean(errors.password)}
-                      size="small"
                       helperText={errors.password?.message}
                       fullWidth
                     />
@@ -175,7 +172,6 @@ export function RegisterPage() {
                       {...field}
                       label="Подтверждение пароля"
                       type="password"
-                      size="small"
                       error={Boolean(errors.confirmPassword)}
                       helperText={errors.confirmPassword?.message}
                       fullWidth
@@ -194,7 +190,6 @@ export function RegisterPage() {
                       onChange={field.onChange}
                       onBlur={field.onBlur}
                       inputRef={field.ref}
-                      size="small"
                       error={Boolean(errors.referralUserLogin)}
                       helperText={errors.referralUserLogin?.message}
                       autoComplete="tel"
