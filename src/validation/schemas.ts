@@ -49,7 +49,10 @@ export const paymentFormSchema = z.object({
   phone: z
     .string()
     .min(1, "Укажите номер телефона")
-    .refine((v) => isValidRuMobile(v), "Нужен мобильный номер РФ в формате +7"),
+    .refine(
+      (v) => isValidRuMobile(v),
+      "Нужен мобильный номер в формате +7*********",
+    ),
   receipt: z
     .custom<File>((v) => v instanceof File, "Прикрепите квитанцию")
     .refine((f) => f.size > 0, "Прикрепите квитанцию"),

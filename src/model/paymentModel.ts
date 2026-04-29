@@ -1,4 +1,5 @@
 import { checkPaymentApi, createPaymentApi } from "../api/paymentApi";
+import { DEVELOPER_CONTACT } from "../config";
 import { normalizeRuPhone } from "./phone";
 
 const ALLOWED_MIME = new Set([
@@ -53,8 +54,10 @@ export async function submitPaymentReceipt(
     fileBase64,
     receipt.type || undefined,
   );
-  if (!check.isPayCorrect) {
-    throw new Error("Сумма в квитанции не совпадает с указанной");
+  if (!check.result) {
+    throw new Error(
+      `Сумма в квитанции не совпадает с суммой к оплате. \n\nПроверьте выбранный период оплаты и квитанцию. Если проблема не решится, обратитесь в поддержку ${DEVELOPER_CONTACT}`,
+    );
   }
 
   const created = await createPaymentApi({

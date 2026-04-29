@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -14,7 +15,9 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { PhoneField } from "../components/PhoneField";
+import { DEVELOPER_CONTACT } from "../config";
 import { submitPaymentReceipt } from "../model/paymentModel";
+import { normalizeRuPhone } from "../model/phone";
 import {
   paymentFormSchema,
   type PaymentFormValues,
@@ -25,11 +28,30 @@ const PERIOD_AMOUNT_MAP: Record<number, number> = {
   3: 750,
   6: 1300,
 };
+const PAYMENT_PHONE = "+79106174473";
+type PendingPayment = {
+  phone: string;
+  period: number;
+  amount: number;
+  receipt: File;
+};
 
 export function PaymentPage() {
+  const [searchParams] = useSearchParams();
+  const phoneFromQuery = React.useMemo(() => {
+    const raw = (searchParams.get("phone") ?? "").trim();
+    if (!raw) {
+      return "";
+    }
+    return normalizeRuPhone(raw);
+  }, [searchParams]);
+
   const [error, setError] = React.useState<string | null>(null);
   const [successOpen, setSuccessOpen] = React.useState(false);
-  const [paymentId, setPaymentId] = React.useState<string | undefined>();
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [pendingPayment, setPendingPayment] =
+    React.useState<PendingPayment | null>(null);
+  const [copied, setCopied] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const pasteAreaRef = React.useRef<HTMLDivElement | null>(null);
 
@@ -43,13 +65,19 @@ export function PaymentPage() {
     resolver: zodResolver(paymentFormSchema),
     defaultValues: {
       period: 1,
-      phone: "",
+      phone: phoneFromQuery,
     } as PaymentFormValues,
   });
 
   const period = Number(watch("period") ?? 1);
   const amount = PERIOD_AMOUNT_MAP[period] ?? 0;
   const receipt = watch("receipt");
+
+  React.useEffect(() => {
+    if (phoneFromQuery) {
+      setValue("phone", phoneFromQuery, { shouldValidate: true });
+    }
+  }, [phoneFromQuery, setValue]);
 
   React.useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
@@ -88,30 +116,56 @@ export function PaymentPage() {
     setError(null);
   };
 
+  const copyPaymentPhone = async () => {
+    try {
+      await navigator.clipboard.writeText(PAYMENT_PHONE);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      setError("Не удалось скопировать номер. Скопируйте вручную.");
+    }
+  };
+
   const onSubmit = handleSubmit(async (data) => {
     setError(null);
+    const paymentAmount = PERIOD_AMOUNT_MAP[Number(data.period)];
+    setPendingPayment({
+      phone: data.phone,
+      period: Number(data.period),
+      amount: paymentAmount,
+      receipt: data.receipt,
+    });
+    setConfirmOpen(true);
+  });
+
+  const confirmPayment = async () => {
+    if (!pendingPayment) {
+      return;
+    }
+    setError(null);
     setSubmitting(true);
+    setConfirmOpen(false);
     try {
-      const res = await submitPaymentReceipt(
-        Number(data.period),
-        PERIOD_AMOUNT_MAP[Number(data.period)],
-        data.phone,
-        data.receipt,
+      await submitPaymentReceipt(
+        pendingPayment.period,
+        pendingPayment.amount,
+        pendingPayment.phone,
+        pendingPayment.receipt,
       );
-      setPaymentId(res.paymentId);
       setSuccessOpen(true);
+      setPendingPayment(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось отправить данные");
     } finally {
       setSubmitting(false);
     }
-  });
+  };
 
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Stack spacing={3}>
         <Typography variant="h5" component="h1">
-          Оплата ВПН по номеру телефона
+          Оплата подписки ВПН
         </Typography>
 
         {error ? <Alert severity="error">{error}</Alert> : null}
@@ -123,7 +177,7 @@ export function PaymentPage() {
               control={control}
               render={({ field }) => (
                 <PhoneField
-                  label="Телефон"
+                  label="Телефон для оплаты"
                   name={field.name}
                   value={field.value}
                   onChange={field.onChange}
@@ -161,6 +215,29 @@ export function PaymentPage() {
               InputProps={{ readOnly: true }}
               fullWidth
             />
+
+            <Alert severity="warning" icon={false}>
+              <Stack spacing={1}>
+                <Typography variant="body2">
+                  Оплату можно произвести переводом на карту по номеру телефона
+                </Typography>
+                <Typography variant="body2" fontWeight={700}>
+                  Перевод ТОЛЬКО на OZON банк
+                </Typography>
+                <Typography variant="body2" fontWeight={700}>
+                  В случае перевода на другой банк, платёж проведён НЕ БУДЕТ
+                </Typography>
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={copyPaymentPhone}
+                >
+                  {copied
+                    ? "Номер скопирован"
+                    : "Скопировать номер телефона для перевода"}
+                </Button>
+              </Stack>
+            </Alert>
 
             <Box
               ref={pasteAreaRef}
@@ -206,11 +283,41 @@ export function PaymentPage() {
               size="large"
               disabled={submitting}
             >
-              {submitting ? "Проверка и отправка…" : "Проверить и отправить"}
+              {submitting ? "Проверка и отправка…" : "Оплатить"}
             </Button>
           </Stack>
         </Box>
       </Stack>
+
+      <Dialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        fullWidth
+        maxWidth="xs"
+      >
+        <DialogTitle>Подтверждение оплаты</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Вы хотите провести оплату за номер{" "}
+            <strong>{pendingPayment?.phone ?? "—"}</strong> за период{" "}
+            <strong>{pendingPayment?.period ?? "—"} мес.</strong> на сумму{" "}
+            <strong>{pendingPayment?.amount ?? "—"} ₽</strong>.
+          </Typography>
+          <Typography sx={{ mt: 1 }}>Подтверждаете?</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmOpen(false)} disabled={submitting}>
+            Отмена
+          </Button>
+          <Button
+            onClick={confirmPayment}
+            variant="contained"
+            disabled={submitting}
+          >
+            Подтверждаю
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={successOpen}
@@ -218,16 +325,18 @@ export function PaymentPage() {
         fullWidth
         maxWidth="xs"
       >
-        <DialogTitle>Оплата принята</DialogTitle>
+        <DialogTitle>Ваша оплата успешно принята</DialogTitle>
         <DialogContent>
-          <Typography>
-            Квитанция успешно получена. После проверки доступ будет активирован.
-          </Typography>
-          {paymentId ? (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-              Номер заявки: {paymentId}
+          <Stack spacing={1}>
+            <Typography>Доступ продлён на {period} мес.</Typography>
+            <Typography>
+              Обновите подписку в приложении в котором вы используете VPN
             </Typography>
-          ) : null}
+            <Typography variant="caption" color="text.secondary">
+              Если у вас есть проблемы, обратитесь в поддержку{" "}
+              {DEVELOPER_CONTACT}
+            </Typography>
+          </Stack>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setSuccessOpen(false)}>Закрыть</Button>

@@ -15,6 +15,7 @@ import Container from '@mui/material/Container';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { RegisterPage } from './pages/RegisterPage';
+import { PaymentPage } from './pages/PaymentPage';
 
 const theme = createTheme({
   palette: {
@@ -99,6 +100,9 @@ function AppShell({ children }: { children: React.ReactNode }) {
           <Button component={RouterLink} to="/register" color="inherit" size="small">
             Регистрация
           </Button>
+          <Button component={RouterLink} to="/payment" color="inherit" size="small">
+            Оплата
+          </Button>
         </Toolbar>
       </AppBar>
       <Box component="main" sx={{ flex: 1, bgcolor: 'background.default' }}>
@@ -119,6 +123,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/register" replace />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/payment" element={<PaymentPage />} />
             <Route path="*" element={<Navigate to="/register" replace />} />
           </Routes>
         </AppShell>

@@ -1,7 +1,7 @@
 import { request } from './httpClient';
 
 export type CheckPaymentResponse = {
-  isPayCorrect: boolean;
+  result: boolean;
 };
 
 export type CreatePaymentPayload = {
