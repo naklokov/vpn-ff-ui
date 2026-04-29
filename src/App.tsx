@@ -33,8 +33,7 @@ const theme = createTheme({
   },
   shape: { borderRadius: 6 },
   typography: {
-    fontFamily:
-      '"Inter","SF Pro Text","Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif',
+    fontFamily: '"Roboto","Helvetica","Arial",sans-serif',
     h6: {
       fontWeight: 700,
       letterSpacing: '0.01em',

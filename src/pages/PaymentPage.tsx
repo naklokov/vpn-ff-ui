@@ -50,6 +50,7 @@ export function PaymentPage() {
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingPayment, setPendingPayment] =
     React.useState<PendingPayment | null>(null);
+  const [successPeriod, setSuccessPeriod] = React.useState<number | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
   const pasteAreaRef = React.useRef<HTMLDivElement | null>(null);
@@ -57,6 +58,7 @@ export function PaymentPage() {
   const {
     control,
     handleSubmit,
+    resetField,
     setValue,
     watch,
     formState: { errors },
@@ -165,16 +167,21 @@ export function PaymentPage() {
     if (!pendingPayment) {
       return;
     }
+    const confirmedPayment = pendingPayment;
     setError(null);
     setSubmitting(true);
     setConfirmOpen(false);
     try {
       await submitPaymentReceipt(
-        pendingPayment.period,
-        pendingPayment.amount,
-        pendingPayment.phone,
-        pendingPayment.receipt,
+        confirmedPayment.period,
+        confirmedPayment.amount,
+        confirmedPayment.phone,
+        confirmedPayment.receipt,
       );
+      resetField("phone", { defaultValue: "" });
+      resetField("period", { defaultValue: 1 });
+      resetField("receipt");
+      setSuccessPeriod(confirmedPayment.period);
       setSuccessOpen(true);
       setPendingPayment(null);
     } catch (e) {
@@ -351,7 +358,7 @@ export function PaymentPage() {
         <DialogTitle>Ваша оплата успешно принята</DialogTitle>
         <DialogContent>
           <Stack spacing={1}>
-            <Typography>Доступ продлён на {period} мес.</Typography>
+            <Typography>Доступ продлён на {successPeriod ?? period} мес.</Typography>
             <Typography>
               Обновите подписку в приложении в котором вы используете VPN
             </Typography>

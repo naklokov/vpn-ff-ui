@@ -6,7 +6,6 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -74,48 +73,22 @@ export function RegisterPage() {
   });
 
   return (
-    <Box
-      sx={{
-        minHeight: "calc(100vh - 65px)",
-        display: "grid",
-        placeItems: "center",
-        px: 2,
-        py: 5,
-        background:
-          "radial-gradient(1200px 500px at -10% -10%, rgba(204,34,48,0.14), transparent 60%), radial-gradient(900px 400px at 110% 100%, rgba(142,167,194,0.28), transparent 65%)",
-      }}
-    >
-      <Container maxWidth="sm" sx={{ px: 0 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            border: "1px solid",
-            borderColor: "divider",
-            borderRadius: 2,
-            p: { xs: 2.5, sm: 3.5 },
-            backgroundColor: "rgba(255,255,255,0.9)",
-            backdropFilter: "blur(4px)",
-          }}
-        >
-          <Stack spacing={3}>
-            <Box>
-              <Typography variant="h5" component="h1" sx={{ mt: 0.25 }}>
-                Регистрация
-              </Typography>
-              <Typography
-                variant="body2"
-                color="secondary.main"
-                sx={{ mt: 0.5 }}
-              >
-                Создайте аккаунт для доступа к VPN.
-              </Typography>
-            </Box>
+    <Container maxWidth="sm" sx={{ py: 6 }}>
+      <Stack spacing={3}>
+        <Box>
+          <Typography variant="h5" component="h1" sx={{ mt: 0.25 }}>
+            Регистрация
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Создайте аккаунт для доступа к VPN.
+          </Typography>
+        </Box>
 
-            {success ? <Alert severity="success">{success}</Alert> : null}
-            {error ? <Alert severity="error">{error}</Alert> : null}
+        {success ? <Alert severity="success">{success}</Alert> : null}
+        {error ? <Alert severity="error">{error}</Alert> : null}
 
-            <Box component="form" onSubmit={onSubmit} noValidate>
-              <Stack spacing={2}>
+        <Box component="form" onSubmit={onSubmit} noValidate>
+          <Stack spacing={2}>
                 <Controller
                   name="email"
                   control={control}
@@ -198,19 +171,17 @@ export function RegisterPage() {
                   )}
                 />
 
-                <Button
-                  type="submit"
-                  variant="contained"
-                  size="large"
-                  disabled={submitting}
-                >
-                  {submitting ? "Отправка..." : "Зарегистрироваться"}
-                </Button>
-              </Stack>
-            </Box>
+            <Button
+              type="submit"
+              variant="contained"
+              size="large"
+              disabled={submitting}
+            >
+              {submitting ? "Отправка..." : "Зарегистрироваться"}
+            </Button>
           </Stack>
-        </Paper>
-      </Container>
-    </Box>
+        </Box>
+      </Stack>
+    </Container>
   );
 }
