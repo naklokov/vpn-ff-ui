@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSearchParams } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -10,12 +10,13 @@ import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
+import Link from "@mui/material/Link";
 import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { PhoneField } from "../components/PhoneField";
-import { DEVELOPER_CONTACT, PAYMENT_PHONE } from "../config";
+import { PAYMENT_PHONE } from "../config";
 import { submitPaymentReceipt } from "../model/paymentModel";
 import { normalizeRuPhone } from "../model/phone";
 import {
@@ -363,8 +364,10 @@ export function PaymentPage() {
               Обновите подписку в приложении в котором вы используете VPN
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Если у вас есть проблемы, обратитесь в поддержку{" "}
-              {DEVELOPER_CONTACT}
+              Если у вас есть проблемы, обратитесь в{" "}
+              <Link component={RouterLink} to="/support">
+                поддержку
+              </Link>
             </Typography>
           </Stack>
         </DialogContent>
