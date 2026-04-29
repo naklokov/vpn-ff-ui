@@ -20,6 +20,17 @@ import {
 export function RegisterPage() {
   const [searchParams] = useSearchParams();
   const referralUserLogin = searchParams.get("referralUserLogin") ?? "";
+  const chatIdFromQuery = React.useMemo(() => {
+    const raw = searchParams.get("chatId");
+    if (!raw) {
+      return undefined;
+    }
+    const parsed = Number(raw);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      return undefined;
+    }
+    return parsed;
+  }, [searchParams]);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
@@ -49,6 +60,7 @@ export function RegisterPage() {
         data.phone,
         data.password,
         data.referralUserLogin,
+        chatIdFromQuery,
       );
       setSuccess(
         "Регистрация успешна. На ваш email отправлено письмо с инструкцией по настройке VPN.",

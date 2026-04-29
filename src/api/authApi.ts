@@ -21,7 +21,8 @@ export function registerApi(
   email: string,
   phone: string,
   password: string,
-  referralUserLogin?: string
+  referralUserLogin?: string,
+  chatId?: number
 ): Promise<RegisterResponse> {
   return request<RegisterResponse>('/api/users', {
     method: 'POST',
@@ -30,6 +31,7 @@ export function registerApi(
       phone,
       password,
       ...(referralUserLogin ? { referralUserLogin } : {}),
+      ...(typeof chatId === 'number' ? { chatId } : {}),
     }),
   });
 }

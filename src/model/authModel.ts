@@ -61,6 +61,7 @@ export async function registerUser(
   phone: string,
   password: string,
   referralUserLogin?: string,
+  chatId?: number,
 ): Promise<void> {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPhone = normalizeRuPhone(phone);
@@ -75,6 +76,7 @@ export async function registerUser(
     normalizedPhone,
     password,
     normalizedReferralUserLogin,
+    chatId,
   );
 }
 
