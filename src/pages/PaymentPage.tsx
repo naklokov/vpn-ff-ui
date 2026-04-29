@@ -15,7 +15,7 @@ import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import { PhoneField } from "../components/PhoneField";
-import { DEVELOPER_CONTACT } from "../config";
+import { DEVELOPER_CONTACT, PAYMENT_PHONE } from "../config";
 import { submitPaymentReceipt } from "../model/paymentModel";
 import { normalizeRuPhone } from "../model/phone";
 import {
@@ -28,7 +28,6 @@ const PERIOD_AMOUNT_MAP: Record<number, number> = {
   3: 750,
   6: 1300,
 };
-const PAYMENT_PHONE = "+79106174473";
 type PendingPayment = {
   phone: string;
   period: number;
