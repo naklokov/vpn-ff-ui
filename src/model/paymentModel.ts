@@ -37,7 +37,11 @@ export async function submitPaymentReceipt(
   amount: number,
   phone: string,
   receipt: File,
-): Promise<{ paymentId?: string }> {
+): Promise<{
+  paymentId?: string;
+  isMigratedToRemnawave?: boolean;
+  subscriptionUrl?: string | null;
+}> {
   const err = validateReceiptFile(receipt);
   if (err) {
     throw new Error(err);
@@ -66,7 +70,11 @@ export async function submitPaymentReceipt(
     date: new Date().toISOString(),
   });
 
-  return { paymentId: created._id };
+  return {
+    paymentId: created._id,
+    isMigratedToRemnawave: created.isMigratedToRemnawave,
+    subscriptionUrl: created.subscriptionUrl,
+  };
 }
 
 function fileToBase64(file: File): Promise<string> {

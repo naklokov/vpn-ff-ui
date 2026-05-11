@@ -15,6 +15,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { PhoneField } from "../components/PhoneField";
 import { PAYMENT_PHONE } from "../config";
 import { submitPaymentReceipt } from "../model/paymentModel";
@@ -54,6 +56,10 @@ export function PaymentPage() {
   const [successPeriod, setSuccessPeriod] = React.useState<number | null>(null);
   const [copied, setCopied] = React.useState(false);
   const [submitting, setSubmitting] = React.useState(false);
+  const [migrationInfo, setMigrationInfo] = React.useState<{
+    isMigratedToRemnawave: boolean;
+    subscriptionUrl?: string | null;
+  } | null>(null);
   const pasteAreaRef = React.useRef<HTMLDivElement | null>(null);
 
   const {
@@ -173,7 +179,7 @@ export function PaymentPage() {
     setSubmitting(true);
     setConfirmOpen(false);
     try {
-      await submitPaymentReceipt(
+      const result = await submitPaymentReceipt(
         confirmedPayment.period,
         confirmedPayment.amount,
         confirmedPayment.phone,
@@ -183,6 +189,14 @@ export function PaymentPage() {
       resetField("period", { defaultValue: 1 });
       resetField("receipt");
       setSuccessPeriod(confirmedPayment.period);
+      setMigrationInfo(
+        result.isMigratedToRemnawave
+          ? {
+              isMigratedToRemnawave: true,
+              subscriptionUrl: result.subscriptionUrl,
+            }
+          : null,
+      );
       setSuccessOpen(true);
       setPendingPayment(null);
     } catch (e) {
@@ -359,13 +373,72 @@ export function PaymentPage() {
         onClose={() => setSuccessOpen(false)}
         fullWidth
         maxWidth="xs"
+        PaperProps={{
+          elevation: 6,
+          sx: (theme) => ({
+            borderRadius: 2,
+            border: `2px solid ${theme.palette.success.main}`,
+            overflow: "hidden",
+          }),
+        }}
       >
-        <DialogTitle>Ваша оплата успешно принята</DialogTitle>
-        <DialogContent>
+        <Box
+          sx={(theme) => ({
+            pt: 3,
+            pb: 2,
+            px: 2,
+            textAlign: "center",
+            background: `linear-gradient(180deg, ${alpha(theme.palette.success.main, 0.14)} 0%, ${alpha(theme.palette.success.main, 0.04)} 100%)`,
+          })}
+        >
+          <CheckCircleRoundedIcon
+            sx={(theme) => ({
+              fontSize: 72,
+              color: theme.palette.success.main,
+              filter: `drop-shadow(0 2px 8px ${alpha(theme.palette.success.main, 0.45)})`,
+            })}
+            aria-hidden
+          />
+        </Box>
+        <DialogTitle
+          sx={{
+            textAlign: "center",
+            pt: 1,
+            pb: 0,
+            fontWeight: 700,
+            fontSize: "1.15rem",
+          }}
+        >
+          Ваша оплата успешно принята
+        </DialogTitle>
+        <DialogContent sx={{ pt: 1 }}>
           <Stack spacing={1}>
             <Typography>
               Доступ продлён на {successPeriod ?? period} мес.
             </Typography>
+            {migrationInfo?.isMigratedToRemnawave ? (
+              <Alert severity="info">
+                <Stack spacing={1}>
+                  <Typography variant="body2">
+                    Вас автоматически мигрировали на новый сервер.
+                  </Typography>
+                  {migrationInfo.subscriptionUrl ? (
+                    <Link
+                      href={migrationInfo.subscriptionUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Получить новую ссылку на подписку с инструкциями
+                    </Link>
+                  ) : (
+                    <Typography variant="body2">
+                      Ссылка на подписку пока недоступна. Обратитесь в
+                      поддержку.
+                    </Typography>
+                  )}
+                </Stack>
+              </Alert>
+            ) : null}
             <Typography>
               Обновите подписку в приложении в котором вы используете VPN
             </Typography>
@@ -377,8 +450,16 @@ export function PaymentPage() {
             </Typography>
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setSuccessOpen(false)}>Закрыть</Button>
+        <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
+          <Button
+            onClick={() => setSuccessOpen(false)}
+            variant="contained"
+            color="success"
+            fullWidth
+            size="large"
+          >
+            Закрыть
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

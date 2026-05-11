@@ -19,6 +19,8 @@ export type CreatePaymentResponse = {
   amount: number;
   phone: string;
   date: string;
+  isMigratedToRemnawave?: boolean;
+  subscriptionUrl?: string | null;
 };
 
 export function checkPaymentApi(
