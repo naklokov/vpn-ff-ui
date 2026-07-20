@@ -6,6 +6,7 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
+import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -31,7 +32,10 @@ export function RegisterPage() {
     return parsed;
   }, [searchParams]);
   const [error, setError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState<string | null>(null);
+  const [success, setSuccess] = React.useState(false);
+  const [subscriptionUrl, setSubscriptionUrl] = React.useState<string | null>(
+    null,
+  );
   const [submitting, setSubmitting] = React.useState(false);
 
   const {
@@ -51,19 +55,20 @@ export function RegisterPage() {
 
   const onSubmit = handleSubmit(async (data) => {
     setError(null);
-    setSuccess(null);
+    setSuccess(false);
+    setSubscriptionUrl(null);
     setSubmitting(true);
     try {
-      await registerUser(
+      const result = await registerUser(
         data.email,
         data.phone,
         data.password,
         data.referralUserLogin,
         chatIdFromQuery,
       );
-      setSuccess(
-        "Регистрация успешна. На ваш email отправлено письмо с инструкцией по настройке VPN.",
-      );
+
+      setSubscriptionUrl(result.subscriptionUrl ?? null);
+      setSuccess(true);
     } catch (e) {
       const error = e as any;
       setError(error?.message || "Ошибка регистрации");
@@ -84,7 +89,36 @@ export function RegisterPage() {
           </Typography>
         </Box>
 
-        {success ? <Alert severity="success">{success}</Alert> : null}
+        {success ? (
+          <Alert severity="success">
+            <Stack spacing={1}>
+              <Typography variant="body2">Регистрация успешна.</Typography>
+              {subscriptionUrl ? (
+                <>
+                  <Typography variant="body2">
+                    Ваша ссылка на подписку с инструкцией по настройке VPN:
+                  </Typography>
+                  <Link
+                    href={subscriptionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {subscriptionUrl}
+                  </Link>
+                </>
+              ) : (
+                <Typography variant="body2">
+                  Ссылка на подписку пока недоступна. Она также придёт в письме
+                  на email.
+                </Typography>
+              )}
+              <Typography variant="body2">
+                На ваш email отправлено письмо с инструкцией по настройке VPN.
+                Проверьте папку «Спам», если письмо не пришло.
+              </Typography>
+            </Stack>
+          </Alert>
+        ) : null}
         {error ? <Alert severity="error">{error}</Alert> : null}
 
         <Box component="form" onSubmit={onSubmit} noValidate>

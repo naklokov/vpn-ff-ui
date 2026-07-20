@@ -62,7 +62,7 @@ export async function registerUser(
   password: string,
   referralUserLogin?: string,
   chatId?: number,
-): Promise<void> {
+): Promise<{ subscriptionUrl?: string | null }> {
   const normalizedEmail = email.trim().toLowerCase();
   const normalizedPhone = normalizeRuPhone(phone);
   const referralDigits = (referralUserLogin ?? "").replace(/\D/g, "");
@@ -71,13 +71,15 @@ export async function registerUser(
       ? normalizeRuPhone(referralUserLogin ?? "")
       : undefined;
 
-  await registerApi(
+  const created = await registerApi(
     normalizedEmail,
     normalizedPhone,
     password,
     normalizedReferralUserLogin,
     chatId,
   );
+
+  return { subscriptionUrl: created.subscriptionUrl };
 }
 
 export async function loginUser(

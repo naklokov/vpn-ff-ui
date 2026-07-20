@@ -5,6 +5,7 @@ export type RegisterResponse = {
   _id: string;
   email: string;
   phone: string;
+  subscriptionUrl?: string | null;
   createdAt?: string;
   updatedAt?: string;
 };

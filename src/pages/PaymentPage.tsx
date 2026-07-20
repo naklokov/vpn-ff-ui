@@ -264,7 +264,8 @@ export function PaymentPage() {
             <Alert severity="warning" icon={false}>
               <Stack spacing={1}>
                 <Typography variant="body2">
-                  Оплату можно произвести переводом на карту по номеру телефона
+                  Для оплаты совершите перевод на карту по номеру телефона,
+                  после этого приложите чек в PDF формате в поле ниже
                 </Typography>
                 <Typography variant="body2" fontWeight={700}>
                   Перевод ТОЛЬКО на OZON банк
@@ -292,19 +293,32 @@ export function PaymentPage() {
               ref={pasteAreaRef}
               tabIndex={0}
               sx={{
-                border: "1px dashed",
-                borderColor: "divider",
+                border: errors.receipt ? "2px solid" : "1px dashed",
+                borderColor: errors.receipt ? "error.main" : "divider",
                 borderRadius: 1,
                 p: 2,
                 outline: "none",
-                "&:focus-visible": { borderColor: "primary.main" },
+                bgcolor: errors.receipt
+                  ? "rgba(211, 47, 47, 0.04)"
+                  : "transparent",
+                "&:focus-visible": {
+                  borderColor: errors.receipt ? "error.main" : "primary.main",
+                },
               }}
             >
               <Stack spacing={1}>
-                <Typography variant="body2" color="text.secondary">
+                <Typography
+                  variant="body2"
+                  color={errors.receipt ? "error" : "text.secondary"}
+                  fontWeight={errors.receipt ? 600 : 400}
+                >
                   Приложите квитанцию или скриншот об оплате
                 </Typography>
-                <Button variant="outlined" component="label">
+                <Button
+                  variant="outlined"
+                  component="label"
+                  color={errors.receipt ? "error" : "primary"}
+                >
                   Выбрать чек
                   <input
                     type="file"
@@ -319,7 +333,7 @@ export function PaymentPage() {
                     : "Файл не выбран"}
                 </Typography>
                 {errors.receipt ? (
-                  <Typography variant="caption" color="error">
+                  <Typography variant="caption" color="error" fontWeight={600}>
                     {errors.receipt.message as string}
                   </Typography>
                 ) : null}
