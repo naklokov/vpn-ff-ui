@@ -1,7 +1,8 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { render, screen } from "@testing-library/react";
+import App from "./App";
 
-test('renders app shell', () => {
+test("renders app shell", () => {
   render(<App />);
-  expect(screen.getByRole('heading', { name: 'Вход' })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "VPN FF" })).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Оплата" })).toBeInTheDocument();
 });

@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
@@ -11,26 +11,45 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import Link from "@mui/material/Link";
-import MenuItem from "@mui/material/MenuItem";
+import ButtonBase from "@mui/material/ButtonBase";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
-import TextField from "@mui/material/TextField";
+import Step from "@mui/material/Step";
+import StepLabel from "@mui/material/StepLabel";
+import Stepper from "@mui/material/Stepper";
 import Typography from "@mui/material/Typography";
 import { alpha } from "@mui/material/styles";
 import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
+import DeleteOutlineRoundedIcon from "@mui/icons-material/DeleteOutlineRounded";
+import ImageOutlinedIcon from "@mui/icons-material/ImageOutlined";
+import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
+import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import IconButton from "@mui/material/IconButton";
 import { PhoneField } from "../components/PhoneField";
 import { PAYMENT_PHONE } from "../config";
+import {
+  PAYMENT_PERIOD_OPTIONS,
+  PAYMENT_PERIOD_QUERY,
+  PAYMENT_STEP_QUERY,
+  PERIOD_AMOUNT_MAP,
+  parsePaymentPeriod,
+  parsePaymentStep,
+  periodLabel,
+  usePaymentFlow,
+  type PaymentStep,
+} from "../model/paymentFlow";
 import { submitPaymentReceipt } from "../model/paymentModel";
 import { normalizeRuPhone } from "../model/phone";
 import {
-  paymentFormSchema,
-  type PaymentFormValues,
+  paymentPeriodStepSchema,
+  paymentReceiptStepSchema,
+  type PaymentPeriodStepValues,
 } from "../validation/schemas";
 
-const PERIOD_AMOUNT_MAP: Record<number, number> = {
-  1: 300,
-  3: 750,
-  6: 1300,
+type PeriodFormValues = PaymentPeriodStepValues & {
+  receipt?: File;
 };
+
 type PendingPayment = {
   phone: string;
   period: number;
@@ -38,8 +57,16 @@ type PendingPayment = {
   receipt: File;
 };
 
+const STEP_LABELS = ["Период", "Перевод", "Квитанция"];
+
 export function PaymentPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { setIncomplete, setLastPaymentTo } = usePaymentFlow();
+
+  const step = parsePaymentStep(searchParams.get(PAYMENT_STEP_QUERY));
+  const periodFromQuery = parsePaymentPeriod(
+    searchParams.get(PAYMENT_PERIOD_QUERY),
+  );
   const phoneFromQuery = React.useMemo(() => {
     const raw = (searchParams.get("phone") ?? "").trim();
     if (!raw) {
@@ -49,7 +76,6 @@ export function PaymentPage() {
   }, [searchParams]);
 
   const [error, setError] = React.useState<string | null>(null);
-  const [successOpen, setSuccessOpen] = React.useState(false);
   const [confirmOpen, setConfirmOpen] = React.useState(false);
   const [pendingPayment, setPendingPayment] =
     React.useState<PendingPayment | null>(null);
@@ -64,28 +90,71 @@ export function PaymentPage() {
 
   const {
     control,
-    handleSubmit,
+    trigger,
     resetField,
     setValue,
+    getValues,
     watch,
     formState: { errors },
-  } = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentFormSchema),
+  } = useForm<PeriodFormValues>({
+    resolver: zodResolver(paymentPeriodStepSchema),
     defaultValues: {
-      period: 1,
+      period: periodFromQuery,
       phone: phoneFromQuery,
-    } as PaymentFormValues,
+    },
   });
 
-  const period = Number(watch("period") ?? 1);
+  const period = Number(watch("period") ?? periodFromQuery);
   const amount = PERIOD_AMOUNT_MAP[period] ?? 0;
   const receipt = watch("receipt");
+  const isDone = step === "done" && successPeriod != null;
+  const visibleStep: PaymentStep = isDone ? "done" : step === "done" ? 1 : step;
+  const activeStepIndex = isDone ? 3 : Number(visibleStep) - 1;
+
+  React.useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    let changed = false;
+    if (!next.get(PAYMENT_STEP_QUERY)) {
+      next.set(PAYMENT_STEP_QUERY, "1");
+      changed = true;
+    }
+    if (!next.get(PAYMENT_PERIOD_QUERY)) {
+      next.set(PAYMENT_PERIOD_QUERY, String(periodFromQuery));
+      changed = true;
+    }
+    if (changed) {
+      setSearchParams(next, { replace: true });
+    }
+  }, [periodFromQuery, searchParams, setSearchParams]);
+
+  React.useEffect(() => {
+    if (step === "done" && successPeriod == null) {
+      const next = new URLSearchParams(searchParams);
+      next.set(PAYMENT_STEP_QUERY, "1");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams, step, successPeriod]);
+
+  React.useEffect(() => {
+    if (isDone) {
+      setIncomplete(false);
+      return;
+    }
+    if (visibleStep === 2 || visibleStep === 3) {
+      setIncomplete(true);
+      setLastPaymentTo(`/payment?${searchParams.toString()}`);
+    }
+  }, [isDone, searchParams, setIncomplete, setLastPaymentTo, visibleStep]);
 
   React.useEffect(() => {
     if (phoneFromQuery) {
       setValue("phone", phoneFromQuery, { shouldValidate: true });
     }
   }, [phoneFromQuery, setValue]);
+
+  React.useEffect(() => {
+    setValue("period", periodFromQuery, { shouldValidate: false });
+  }, [periodFromQuery, setValue]);
 
   React.useEffect(() => {
     const onPaste = (event: ClipboardEvent) => {
@@ -114,13 +183,36 @@ export function PaymentPage() {
     }
     el.addEventListener("paste", onPaste);
     return () => el.removeEventListener("paste", onPaste);
-  }, [setValue]);
+  }, [setValue, step]);
+
+  const goToStep = React.useCallback(
+    (nextStep: PaymentStep, nextPeriod = period) => {
+      const next = new URLSearchParams(searchParams);
+      next.set(PAYMENT_STEP_QUERY, String(nextStep));
+      next.set(PAYMENT_PERIOD_QUERY, String(nextPeriod));
+      const phone = getValues("phone");
+      if (phone) {
+        next.set("phone", normalizeRuPhone(phone));
+      }
+      if (nextStep === 2 || nextStep === 3) {
+        setLastPaymentTo(`/payment?${next.toString()}`);
+      }
+      setSearchParams(next);
+      setError(null);
+    },
+    [getValues, period, searchParams, setLastPaymentTo, setSearchParams],
+  );
 
   const onFileChange = (file: File | undefined) => {
     if (!file) {
       return;
     }
     setValue("receipt", file, { shouldValidate: true });
+    setError(null);
+  };
+
+  const clearReceipt = () => {
+    setValue("receipt", undefined, { shouldValidate: true });
     setError(null);
   };
 
@@ -141,9 +233,9 @@ export function PaymentPage() {
         document.body.appendChild(textarea);
         textarea.focus();
         textarea.select();
-        const copied = document.execCommand("copy");
+        const copiedOk = document.execCommand("copy");
         document.body.removeChild(textarea);
-        if (!copied) {
+        if (!copiedOk) {
           throw new Error("Не удалось скопировать номер. Скопируйте вручную.");
         }
       }
@@ -158,17 +250,36 @@ export function PaymentPage() {
     }
   };
 
-  const onSubmit = handleSubmit(async (data) => {
-    setError(null);
-    const paymentAmount = PERIOD_AMOUNT_MAP[Number(data.period)];
+  const goToTransfer = async () => {
+    const valid = await trigger(["phone", "period"]);
+    if (!valid) {
+      return;
+    }
+    goToStep(2, Number(getValues("period")));
+  };
+
+  const goToReceipt = () => {
+    goToStep(3);
+  };
+
+  const openConfirm = () => {
+    const parsed = paymentReceiptStepSchema.safeParse({
+      receipt: getValues("receipt"),
+    });
+    if (!parsed.success) {
+      setError(parsed.error.issues[0]?.message ?? "Прикрепите квитанцию");
+      return;
+    }
+    const values = getValues();
+    const paymentAmount = PERIOD_AMOUNT_MAP[Number(values.period)];
     setPendingPayment({
-      phone: data.phone,
-      period: Number(data.period),
+      phone: values.phone,
+      period: Number(values.period),
       amount: paymentAmount,
-      receipt: data.receipt,
+      receipt: parsed.data.receipt,
     });
     setConfirmOpen(true);
-  });
+  };
 
   const confirmPayment = async () => {
     if (!pendingPayment) {
@@ -197,13 +308,20 @@ export function PaymentPage() {
             }
           : null,
       );
-      setSuccessOpen(true);
       setPendingPayment(null);
+      setIncomplete(false);
+      goToStep("done", confirmedPayment.period);
     } catch (e) {
       setError(e instanceof Error ? e.message : "Не удалось отправить данные");
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const restartPayment = () => {
+    setSuccessPeriod(null);
+    setMigrationInfo(null);
+    goToStep(1, 1);
   };
 
   return (
@@ -213,10 +331,42 @@ export function PaymentPage() {
           Оплата подписки ВПН
         </Typography>
 
+        <Stepper activeStep={activeStepIndex} alternativeLabel>
+          {STEP_LABELS.map((label, index) => (
+            <Step
+              key={label}
+              completed={isDone || index < activeStepIndex}
+              sx={{
+                cursor:
+                  !isDone && index < activeStepIndex ? "pointer" : "default",
+              }}
+              onClick={() => {
+                if (!isDone && index < activeStepIndex) {
+                  goToStep((index + 1) as 1 | 2 | 3);
+                }
+              }}
+            >
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
         {error ? <Alert severity="error">{error}</Alert> : null}
 
-        <Box component="form" onSubmit={onSubmit} noValidate>
+        {isDone ? (
+          <SuccessPanel
+            period={successPeriod ?? period}
+            migrationInfo={migrationInfo}
+            onClose={restartPayment}
+          />
+        ) : null}
+
+        {visibleStep === 1 ? (
           <Stack spacing={2}>
+            <Typography color="text.secondary">
+              Выберите период оплаты и укажите номер, на который оформлена
+              подписка.
+            </Typography>
             <Controller
               name="phone"
               control={control}
@@ -234,49 +384,83 @@ export function PaymentPage() {
                 />
               )}
             />
+            <Stack spacing={1.5}>
+              {PAYMENT_PERIOD_OPTIONS.map((option) => {
+                const selected = Number(period) === option.period;
+                return (
+                  <Paper
+                    key={option.period}
+                    variant="outlined"
+                    component={ButtonBase}
+                    onClick={() => {
+                      setValue("period", option.period, {
+                        shouldValidate: true,
+                      });
+                      const next = new URLSearchParams(searchParams);
+                      next.set(PAYMENT_STEP_QUERY, "1");
+                      next.set(PAYMENT_PERIOD_QUERY, String(option.period));
+                      setSearchParams(next, { replace: true });
+                    }}
+                    sx={(theme) => ({
+                      p: 2,
+                      width: "100%",
+                      display: "block",
+                      textAlign: "left",
+                      borderWidth: 2,
+                      borderColor: selected
+                        ? "primary.main"
+                        : theme.palette.divider,
+                      bgcolor: selected
+                        ? alpha(theme.palette.primary.main, 0.06)
+                        : "background.paper",
+                    })}
+                  >
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Typography fontWeight={700}>{option.label}</Typography>
+                      <Typography fontWeight={700}>{option.amount} ₽</Typography>
+                    </Stack>
+                  </Paper>
+                );
+              })}
+            </Stack>
+            {errors.period ? (
+              <Typography variant="caption" color="error">
+                {errors.period.message as string}
+              </Typography>
+            ) : null}
+            <Button variant="contained" size="large" onClick={goToTransfer}>
+              Далее
+            </Button>
+          </Stack>
+        ) : null}
 
-            <Controller
-              name="period"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  select
-                  label="Период оплаты"
-                  error={Boolean(errors.period)}
-                  helperText={errors.period?.message}
-                  fullWidth
-                >
-                  <MenuItem value={1}>1 месяц</MenuItem>
-                  <MenuItem value={3}>3 месяца</MenuItem>
-                  <MenuItem value={6}>6 месяцев</MenuItem>
-                </TextField>
-              )}
-            />
-
-            <TextField
-              label="Сумма к оплате"
-              value={amount ? `${amount} ₽` : "—"}
-              InputProps={{ readOnly: true }}
-              fullWidth
-            />
-
+        {visibleStep === 2 ? (
+          <Stack spacing={2}>
+            <Alert severity="info">
+              К оплате: <strong>{amount} ₽</strong> за{" "}
+              <strong>{periodLabel(period)}</strong>
+            </Alert>
             <Alert severity="warning" icon={false}>
               <Stack spacing={1}>
                 <Typography variant="body2">
-                  Для оплаты совершите перевод на карту по номеру телефона,
-                  после этого приложите чек в PDF формате в поле ниже
+                  Совершите перевод на карту по номеру телефона. Переводите
+                  точную сумму за выбранный период.
                 </Typography>
                 <Typography variant="body2" fontWeight={700}>
                   Перевод ТОЛЬКО на OZON банк
                 </Typography>
                 <Typography variant="body2" fontWeight={700}>
-                  В случае перевода на другой банк, платёж проведён НЕ БУДЕТ
+                  В случае перевода на другой банк платёж проведён НЕ БУДЕТ
                 </Typography>
-                <Typography variant="body2" fontWeight={700}>
-                  После оплаты ОБЯЗАТЕЛЬНО приложите чек в PDF формате в поле
-                  ниже, иначе платёж проведён НЕ БУДЕТ
-                </Typography>
+                {PAYMENT_PHONE ? (
+                  <Typography variant="body2">
+                    Номер для перевода: <strong>{PAYMENT_PHONE}</strong>
+                  </Typography>
+                ) : null}
                 <Button
                   variant="outlined"
                   size="small"
@@ -288,68 +472,134 @@ export function PaymentPage() {
                 </Button>
               </Stack>
             </Alert>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => goToStep(1)}
+                fullWidth
+              >
+                Назад
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={goToReceipt}
+                fullWidth
+              >
+                Я перевёл
+              </Button>
+            </Stack>
+          </Stack>
+        ) : null}
 
+        {visibleStep === 3 ? (
+          <Stack spacing={2}>
+            <Alert severity="info">
+              К оплате: <strong>{amount} ₽</strong> за{" "}
+              <strong>{periodLabel(period)}</strong>
+            </Alert>
+            <Alert severity="warning">
+              После перевода обязательно приложите чек. Без квитанции платёж
+              проведён не будет.
+            </Alert>
             <Box
               ref={pasteAreaRef}
               tabIndex={0}
               sx={{
-                border: errors.receipt ? "2px solid" : "1px dashed",
-                borderColor: errors.receipt ? "error.main" : "divider",
+                border: error ? "2px solid" : "1px dashed",
+                borderColor: error
+                  ? "error.main"
+                  : receipt instanceof File
+                    ? "success.main"
+                    : "divider",
                 borderRadius: 1,
                 p: 2,
                 outline: "none",
-                bgcolor: errors.receipt
-                  ? "rgba(211, 47, 47, 0.04)"
-                  : "transparent",
+                bgcolor: (theme) =>
+                  error
+                    ? "rgba(211, 47, 47, 0.04)"
+                    : receipt instanceof File
+                      ? alpha(theme.palette.success.main, 0.06)
+                      : "transparent",
                 "&:focus-visible": {
-                  borderColor: errors.receipt ? "error.main" : "primary.main",
+                  borderColor: error ? "error.main" : "primary.main",
                 },
               }}
             >
-              <Stack spacing={1}>
-                <Typography
-                  variant="body2"
-                  color={errors.receipt ? "error" : "text.secondary"}
-                  fontWeight={errors.receipt ? 600 : 400}
-                >
-                  Приложите квитанцию или скриншот об оплате
-                </Typography>
-                <Button
-                  variant="outlined"
-                  component="label"
-                  color={errors.receipt ? "error" : "primary"}
-                >
-                  Выбрать чек
-                  <input
-                    type="file"
-                    hidden
-                    accept="application/pdf,image/*"
-                    onChange={(e) => onFileChange(e.target.files?.[0])}
-                  />
-                </Button>
-                <Typography variant="body2" color="text.secondary">
-                  {receipt instanceof File
-                    ? `${receipt.name} (${Math.round(receipt.size / 1024)} КБ)`
-                    : "Файл не выбран"}
-                </Typography>
-                {errors.receipt ? (
-                  <Typography variant="caption" color="error" fontWeight={600}>
-                    {errors.receipt.message as string}
-                  </Typography>
-                ) : null}
+              <Stack spacing={1.5}>
+                {receipt instanceof File ? (
+                  <Stack
+                    direction="row"
+                    spacing={1.5}
+                    alignItems="center"
+                    sx={{ minWidth: 0 }}
+                  >
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography
+                        fontWeight={700}
+                        sx={{
+                          wordBreak: "break-word",
+                          fontSize: "1.05rem",
+                          lineHeight: 1.3,
+                        }}
+                      >
+                        {receipt.name}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {formatReceiptSize(receipt.size)}
+                      </Typography>
+                    </Box>
+                    {receiptFileIcon(receipt)}
+                    <IconButton
+                      aria-label="Удалить файл"
+                      onClick={clearReceipt}
+                      color="error"
+                    >
+                      <DeleteOutlineRoundedIcon />
+                    </IconButton>
+                  </Stack>
+                ) : (
+                  <>
+                    <Typography variant="body2" color="text.secondary">
+                      Приложите квитанцию или скриншот об оплате. Можно вставить
+                      из буфера обмена.
+                    </Typography>
+                    <Button variant="outlined" component="label">
+                      Выбрать чек
+                      <input
+                        type="file"
+                        hidden
+                        accept="application/pdf,image/*"
+                        onChange={(e) => onFileChange(e.target.files?.[0])}
+                      />
+                    </Button>
+                  </>
+                )}
               </Stack>
             </Box>
-
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={submitting}
-            >
-              {submitting ? "Проверка и отправка…" : "Оплатить"}
-            </Button>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                size="large"
+                onClick={() => goToStep(2)}
+                fullWidth
+                disabled={submitting}
+              >
+                Назад
+              </Button>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={openConfirm}
+                fullWidth
+                disabled={submitting}
+              >
+                {submitting ? "Проверка и отправка…" : "Отправить квитанцию"}
+              </Button>
+            </Stack>
           </Stack>
-        </Box>
+        ) : null}
       </Stack>
 
       <Dialog
@@ -381,101 +631,115 @@ export function PaymentPage() {
           </Button>
         </DialogActions>
       </Dialog>
-
-      <Dialog
-        open={successOpen}
-        onClose={() => setSuccessOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        PaperProps={{
-          elevation: 6,
-          sx: (theme) => ({
-            borderRadius: 2,
-            border: `2px solid ${theme.palette.success.main}`,
-            overflow: "hidden",
-          }),
-        }}
-      >
-        <Box
-          sx={(theme) => ({
-            pt: 3,
-            pb: 2,
-            px: 2,
-            textAlign: "center",
-            background: `linear-gradient(180deg, ${alpha(theme.palette.success.main, 0.14)} 0%, ${alpha(theme.palette.success.main, 0.04)} 100%)`,
-          })}
-        >
-          <CheckCircleRoundedIcon
-            sx={(theme) => ({
-              fontSize: 72,
-              color: theme.palette.success.main,
-              filter: `drop-shadow(0 2px 8px ${alpha(theme.palette.success.main, 0.45)})`,
-            })}
-            aria-hidden
-          />
-        </Box>
-        <DialogTitle
-          sx={{
-            textAlign: "center",
-            pt: 1,
-            pb: 0,
-            fontWeight: 700,
-            fontSize: "1.15rem",
-          }}
-        >
-          Ваша оплата успешно принята
-        </DialogTitle>
-        <DialogContent sx={{ pt: 1 }}>
-          <Stack spacing={1}>
-            <Typography>
-              Доступ продлён на {successPeriod ?? period} мес.
-            </Typography>
-            {migrationInfo?.isMigratedToRemnawave ? (
-              <Alert severity="info">
-                <Stack spacing={1}>
-                  <Typography variant="body2">
-                    Вас автоматически мигрировали на новый сервер.
-                  </Typography>
-                  {migrationInfo.subscriptionUrl ? (
-                    <Link
-                      href={migrationInfo.subscriptionUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Получить новую ссылку на подписку с инструкциями
-                    </Link>
-                  ) : (
-                    <Typography variant="body2">
-                      Ссылка на подписку пока недоступна. Обратитесь в
-                      поддержку.
-                    </Typography>
-                  )}
-                </Stack>
-              </Alert>
-            ) : null}
-            <Typography>
-              Обновите подписку в приложении в котором вы используете VPN
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Если у вас есть проблемы, обратитесь в{" "}
-              <Link component={RouterLink} to="/support">
-                поддержку
-              </Link>
-            </Typography>
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, pt: 0 }}>
-          <Button
-            onClick={() => setSuccessOpen(false)}
-            variant="contained"
-            color="success"
-            fullWidth
-            size="large"
-          >
-            Закрыть
-          </Button>
-        </DialogActions>
-      </Dialog>
     </Container>
+  );
+}
+
+function formatReceiptSize(bytes: number): string {
+  if (bytes < 1024) {
+    return `${bytes} Б`;
+  }
+  return `${Math.round(bytes / 1024)} КБ`;
+}
+
+function receiptFileIcon(file: File) {
+  const sx = { fontSize: 36, color: "text.secondary", flexShrink: 0 };
+  if (
+    file.type === "application/pdf" ||
+    file.name.toLowerCase().endsWith(".pdf")
+  ) {
+    return <PictureAsPdfOutlinedIcon sx={{ ...sx, color: "error.main" }} />;
+  }
+  if (file.type.startsWith("image/")) {
+    return <ImageOutlinedIcon sx={sx} />;
+  }
+  return <InsertDriveFileOutlinedIcon sx={sx} />;
+}
+
+function SuccessPanel({
+  period,
+  migrationInfo,
+  onClose,
+}: {
+  period: number;
+  migrationInfo: {
+    isMigratedToRemnawave: boolean;
+    subscriptionUrl?: string | null;
+  } | null;
+  onClose: () => void;
+}) {
+  return (
+    <Paper
+      elevation={0}
+      sx={(theme) => ({
+        borderRadius: 2,
+        border: `2px solid ${theme.palette.success.main}`,
+        overflow: "hidden",
+      })}
+    >
+      <Box
+        sx={(theme) => ({
+          pt: 3,
+          pb: 2,
+          px: 2,
+          textAlign: "center",
+          background: `linear-gradient(180deg, ${alpha(theme.palette.success.main, 0.14)} 0%, ${alpha(theme.palette.success.main, 0.04)} 100%)`,
+        })}
+      >
+        <CheckCircleRoundedIcon
+          sx={(theme) => ({
+            fontSize: 72,
+            color: theme.palette.success.main,
+            filter: `drop-shadow(0 2px 8px ${alpha(theme.palette.success.main, 0.45)})`,
+          })}
+          aria-hidden
+        />
+      </Box>
+      <Stack spacing={2} sx={{ p: 3, pt: 2 }}>
+        <Typography variant="h6" fontWeight={700} textAlign="center">
+          Ваш период продлён
+        </Typography>
+        <Typography>
+          Доступ продлён на {period} мес. Обновите подписку вручную в приложении,
+          в котором вы используете VPN.
+        </Typography>
+        {migrationInfo?.isMigratedToRemnawave ? (
+          <Alert severity="info">
+            <Stack spacing={1}>
+              <Typography variant="body2">
+                Вас автоматически мигрировали на новый сервер.
+              </Typography>
+              {migrationInfo.subscriptionUrl ? (
+                <Link
+                  href={migrationInfo.subscriptionUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Получить новую ссылку на подписку с инструкциями
+                </Link>
+              ) : (
+                <Typography variant="body2">
+                  Ссылка на подписку пока недоступна. Обратитесь в поддержку.
+                </Typography>
+              )}
+            </Stack>
+          </Alert>
+        ) : null}
+        <Typography variant="caption" color="text.secondary">
+          Если у вас есть проблемы, обратитесь в{" "}
+          <Link component={RouterLink} to="/support">
+            поддержку
+          </Link>
+        </Typography>
+        <Button
+          onClick={onClose}
+          variant="contained"
+          color="success"
+          size="large"
+        >
+          Готово
+        </Button>
+      </Stack>
+    </Paper>
   );
 }

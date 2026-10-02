@@ -1,10 +1,11 @@
 import * as React from "react";
 import {
-  BrowserRouter,
   Link as RouterLink,
   Navigate,
-  Route,
-  Routes,
+  Outlet,
+  RouterProvider,
+  createBrowserRouter,
+  useLocation,
 } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -14,6 +15,8 @@ import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
+import { PaymentNavigationGuard } from "./components/PaymentNavigationGuard";
+import { PaymentFlowProvider, usePaymentFlow } from "./model/paymentFlow";
 import { RegisterPage } from "./pages/RegisterPage";
 import { PaymentPage } from "./pages/PaymentPage";
 import { SupportPage } from "./pages/SupportPage";
@@ -79,74 +82,95 @@ const theme = createTheme({
   },
 });
 
-function AppShell({ children }: { children: React.ReactNode }) {
+function AppShell() {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <AppBar
-        position="sticky"
-        color="inherit"
-        elevation={0}
-        sx={{ borderBottom: 1, borderColor: "divider" }}
-      >
-        <Toolbar sx={{ gap: 2 }}>
-          <Typography
-            variant="h6"
-            component={RouterLink}
-            to="/register"
-            sx={{ flexGrow: 1, textDecoration: "none", color: "inherit" }}
-          >
-            VPN FF
-          </Typography>
-          <Button
-            component={RouterLink}
-            to="/register"
-            color="inherit"
-            size="small"
-          >
-            Регистрация
-          </Button>
-          <Button
-            component={RouterLink}
-            to="/payment"
-            color="inherit"
-            size="small"
-          >
-            Оплата
-          </Button>
-          <Button
-            component={RouterLink}
-            to="/support"
-            color="inherit"
-            size="small"
-          >
-            Поддержка
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Box component="main" sx={{ flex: 1, bgcolor: "background.default" }}>
-        <Container maxWidth={false} disableGutters>
-          {children}
-        </Container>
-      </Box>
-    </Box>
+    <PaymentFlowProvider>
+      <AppLayout />
+    </PaymentFlowProvider>
   );
 }
+
+function AppLayout() {
+  const location = useLocation();
+  const { incomplete, lastPaymentTo } = usePaymentFlow();
+  const paymentTo =
+    location.pathname === "/payment"
+      ? `${location.pathname}${location.search}`
+      : incomplete
+        ? lastPaymentTo
+        : "/payment?step=1";
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
+        <AppBar
+          position="sticky"
+          color="inherit"
+          elevation={0}
+          sx={{ borderBottom: 1, borderColor: "divider" }}
+        >
+          <Toolbar sx={{ gap: 2 }}>
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to="/register"
+              sx={{ flexGrow: 1, textDecoration: "none", color: "inherit" }}
+            >
+              VPN FF
+            </Typography>
+            <Button
+              component={RouterLink}
+              to="/register"
+              color="inherit"
+              size="small"
+            >
+              Регистрация
+            </Button>
+            <Button
+              component={RouterLink}
+              to={paymentTo}
+              color="inherit"
+              size="small"
+            >
+              Оплата
+            </Button>
+            <Button
+              component={RouterLink}
+              to="/support"
+              color="inherit"
+              size="small"
+            >
+              Поддержка
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <Box component="main" sx={{ flex: 1, bgcolor: "background.default" }}>
+          <Container maxWidth={false} disableGutters>
+            <Outlet />
+          </Container>
+        </Box>
+        <PaymentNavigationGuard />
+      </Box>
+  );
+}
+
+const router = createBrowserRouter([
+  {
+    element: <AppShell />,
+    children: [
+      { path: "/", element: <Navigate to="/register" replace /> },
+      { path: "/register", element: <RegisterPage /> },
+      { path: "/payment", element: <PaymentPage /> },
+      { path: "/support", element: <SupportPage /> },
+      { path: "*", element: <Navigate to="/register" replace /> },
+    ],
+  },
+]);
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
-        <AppShell>
-          <Routes>
-            <Route path="/" element={<Navigate to="/register" replace />} />
-            <Route path="/register" element={<RegisterPage />} />
-            <Route path="/payment" element={<PaymentPage />} />
-            <Route path="/support" element={<SupportPage />} />
-            <Route path="*" element={<Navigate to="/register" replace />} />
-          </Routes>
-        </AppShell>
-      </BrowserRouter>
+      <RouterProvider router={router} />
     </ThemeProvider>
   );
 }

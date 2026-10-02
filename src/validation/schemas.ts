@@ -39,7 +39,7 @@ export const registerFormSchema = z
 
 export type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
-export const paymentFormSchema = z.object({
+export const paymentPeriodStepSchema = z.object({
   period: z.coerce
     .number()
     .refine(
@@ -53,9 +53,17 @@ export const paymentFormSchema = z.object({
       (v) => isValidRuMobile(v),
       "Нужен мобильный номер в формате +7*********",
     ),
+});
+
+export const paymentReceiptStepSchema = z.object({
   receipt: z
     .custom<File>((v) => v instanceof File, "Прикрепите квитанцию")
     .refine((f) => f.size > 0, "Прикрепите квитанцию"),
 });
 
+export const paymentFormSchema = paymentPeriodStepSchema.merge(
+  paymentReceiptStepSchema,
+);
+
+export type PaymentPeriodStepValues = z.input<typeof paymentPeriodStepSchema>;
 export type PaymentFormValues = z.input<typeof paymentFormSchema>;
