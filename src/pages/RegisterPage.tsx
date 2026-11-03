@@ -93,7 +93,7 @@ export function RegisterPage() {
           <Alert severity="success">
             <Stack spacing={1}>
               <Typography variant="body2">Регистрация успешна.</Typography>
-              {subscriptionUrl ? (
+              {/* {subscriptionUrl ? (
                 <>
                   <Typography variant="body2">
                     Ваша ссылка на подписку с инструкцией по настройке VPN:
@@ -111,10 +111,14 @@ export function RegisterPage() {
                   Ссылка на подписку пока недоступна. Она также придёт в письме
                   на email.
                 </Typography>
-              )}
+              )} */}
               <Typography variant="body2">
                 На ваш email отправлено письмо с инструкцией по настройке VPN.
-                Проверьте папку «Спам», если письмо не пришло.
+                Проверьте папку «Спам», "Рассылки" или другие папки, если письмо
+                не пришло.
+              </Typography>
+              <Typography variant="body2">
+                {`В случае, если письмо не пришло, обратитесь в поддержку`}
               </Typography>
             </Stack>
           </Alert>
