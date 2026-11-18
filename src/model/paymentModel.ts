@@ -68,6 +68,9 @@ export async function submitPaymentReceipt(
     amount,
     phone: normalized,
     date: new Date().toISOString(),
+    receiptBase64: fileBase64,
+    receiptMimeType: receipt.type || undefined,
+    receiptFileName: receipt.name || undefined,
   });
 
   return {

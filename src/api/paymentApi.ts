@@ -10,6 +10,9 @@ export type CreatePaymentPayload = {
   amount: number;
   phone: string;
   date: string;
+  receiptBase64?: string;
+  receiptMimeType?: string;
+  receiptFileName?: string;
 };
 
 export type CreatePaymentResponse = {
