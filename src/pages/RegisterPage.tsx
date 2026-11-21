@@ -1,19 +1,18 @@
 import * as React from "react";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useSearchParams } from "react-router-dom";
+import { Link as RouterLink, useSearchParams } from "react-router-dom";
 import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
-import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
-import DialogContent from "@mui/material/DialogContent";
-import DialogTitle from "@mui/material/DialogTitle";
 import Link from "@mui/material/Link";
+import Paper from "@mui/material/Paper";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
+import { alpha } from "@mui/material/styles";
+import CheckCircleRoundedIcon from "@mui/icons-material/CheckCircleRounded";
 import { PhoneField } from "../components/PhoneField";
 import { registerUser } from "../model/authModel";
 import {
@@ -84,155 +83,199 @@ export function RegisterPage() {
   return (
     <Container maxWidth="sm" sx={{ py: 6 }}>
       <Stack spacing={3}>
-        <Box>
-          <Typography variant="h5" component="h1" sx={{ mt: 0.25 }}>
-            Регистрация
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-            Создайте аккаунт для доступа к VPN.
-          </Typography>
-        </Box>
+        <Typography variant="h5" component="h1">
+          Регистрация
+        </Typography>
 
-        <Dialog
-          open={success}
-          onClose={() => setSuccess(false)}
-          fullWidth
-          maxWidth="sm"
-        >
-          <DialogTitle>Регистрация успешна</DialogTitle>
-          <DialogContent>
-            <Stack spacing={1.5}>
-              {subscriptionUrl ? (
-                <>
-                  <Typography variant="body2">
-                    Ваша ссылка на подписку с инструкцией по настройке VPN:
-                  </Typography>
-                  <Link
-                    href={subscriptionUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    sx={{ wordBreak: "break-all" }}
-                  >
-                    {subscriptionUrl}
-                  </Link>
-                </>
-              ) : (
-                <Typography variant="body2">
-                  Ссылка на подписку пока недоступна. Она также придёт в письме
-                  на email.
-                </Typography>
-              )}
-              <Typography variant="body2">
-                На ваш email отправлено письмо с инструкцией по настройке VPN.
-                Проверьте папку «Спам», «Рассылки» или другие папки, если письмо
-                не пришло.
-              </Typography>
-              <Typography variant="body2">
-                В случае, если письмо не пришло, обратитесь в поддержку.
-              </Typography>
-            </Stack>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setSuccess(false)}>Закрыть</Button>
-          </DialogActions>
-        </Dialog>
         {error ? <Alert severity="error">{error}</Alert> : null}
 
-        <Box component="form" onSubmit={onSubmit} noValidate>
-          <Stack spacing={2}>
-            <Controller
-              name="email"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Email"
-                  type="email"
-                  error={Boolean(errors.email)}
-                  helperText={errors.email?.message}
-                  fullWidth
+        {success ? (
+          <RegistrationSuccessPanel subscriptionUrl={subscriptionUrl} />
+        ) : (
+          <>
+            <Typography variant="body2" color="text.secondary">
+              Создайте аккаунт для доступа к VPN.
+            </Typography>
+            <Box component="form" onSubmit={onSubmit} noValidate>
+              <Stack spacing={2}>
+                <Controller
+                  name="email"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Email"
+                      type="email"
+                      error={Boolean(errors.email)}
+                      helperText={errors.email?.message}
+                      fullWidth
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Controller
-              name="phone"
-              control={control}
-              render={({ field }) => (
-                <PhoneField
-                  label="Телефон"
-                  name={field.name}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  inputRef={field.ref}
-                  error={Boolean(errors.phone)}
-                  helperText={errors.phone?.message}
-                  autoComplete="tel"
+                <Controller
+                  name="phone"
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneField
+                      label="Телефон"
+                      name={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      inputRef={field.ref}
+                      error={Boolean(errors.phone)}
+                      helperText={errors.phone?.message}
+                      autoComplete="tel"
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Controller
-              name="password"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Пароль"
-                  type="password"
-                  error={Boolean(errors.password)}
-                  helperText={errors.password?.message}
-                  fullWidth
+                <Controller
+                  name="password"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Пароль"
+                      type="password"
+                      error={Boolean(errors.password)}
+                      helperText={errors.password?.message}
+                      fullWidth
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Controller
-              name="confirmPassword"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Подтверждение пароля"
-                  type="password"
-                  error={Boolean(errors.confirmPassword)}
-                  helperText={errors.confirmPassword?.message}
-                  fullWidth
+                <Controller
+                  name="confirmPassword"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Подтверждение пароля"
+                      type="password"
+                      error={Boolean(errors.confirmPassword)}
+                      helperText={errors.confirmPassword?.message}
+                      fullWidth
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Controller
-              name="referralUserLogin"
-              control={control}
-              render={({ field }) => (
-                <PhoneField
-                  label="Номер пользователя, который пригласил вас (необязательно)"
-                  name={field.name}
-                  value={field.value}
-                  onChange={field.onChange}
-                  onBlur={field.onBlur}
-                  inputRef={field.ref}
-                  error={Boolean(errors.referralUserLogin)}
-                  helperText={errors.referralUserLogin?.message}
-                  autoComplete="tel"
-                  fullWidth
+                <Controller
+                  name="referralUserLogin"
+                  control={control}
+                  render={({ field }) => (
+                    <PhoneField
+                      label="Номер пользователя, который пригласил вас (необязательно)"
+                      name={field.name}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onBlur={field.onBlur}
+                      inputRef={field.ref}
+                      error={Boolean(errors.referralUserLogin)}
+                      helperText={errors.referralUserLogin?.message}
+                      autoComplete="tel"
+                      fullWidth
+                    />
+                  )}
                 />
-              )}
-            />
 
-            <Button
-              type="submit"
-              variant="contained"
-              size="large"
-              disabled={submitting}
-            >
-              {submitting ? "Отправка..." : "Зарегистрироваться"}
-            </Button>
-          </Stack>
-        </Box>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  size="large"
+                  disabled={submitting}
+                >
+                  {submitting ? "Отправка..." : "Зарегистрироваться"}
+                </Button>
+              </Stack>
+            </Box>
+          </>
+        )}
       </Stack>
     </Container>
+  );
+}
+
+function RegistrationSuccessPanel({
+  subscriptionUrl,
+}: {
+  subscriptionUrl: string | null;
+}) {
+  return (
+    <Paper
+      elevation={0}
+      sx={(theme) => ({
+        borderRadius: 2,
+        border: `2px solid ${theme.palette.success.main}`,
+        overflow: "hidden",
+      })}
+    >
+      <Box
+        sx={(theme) => ({
+          pt: 3,
+          pb: 2,
+          px: 2,
+          textAlign: "center",
+          background: `linear-gradient(180deg, ${alpha(theme.palette.success.main, 0.14)} 0%, ${alpha(theme.palette.success.main, 0.04)} 100%)`,
+        })}
+      >
+        <CheckCircleRoundedIcon
+          sx={(theme) => ({
+            fontSize: 72,
+            color: theme.palette.success.main,
+            filter: `drop-shadow(0 2px 8px ${alpha(theme.palette.success.main, 0.45)})`,
+          })}
+          aria-hidden
+        />
+      </Box>
+      <Stack spacing={2} sx={{ p: 3, pt: 2 }}>
+        <Typography variant="h6" fontWeight={700} textAlign="center">
+          Регистрация успешна
+        </Typography>
+        <Typography>
+          На ваш email отправлено письмо с инструкцией по настройке VPN.
+          Проверьте папку «Спам», «Рассылки» или другие папки, если письмо не
+          пришло.
+        </Typography>
+        {subscriptionUrl ? (
+          <Alert severity="info">
+            <Stack spacing={1}>
+              <Typography variant="body2">
+                Ваша ссылка на подписку с инструкцией по настройке VPN:
+              </Typography>
+              <Link
+                href={subscriptionUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                sx={{ wordBreak: "break-all" }}
+              >
+                {subscriptionUrl}
+              </Link>
+            </Stack>
+          </Alert>
+        ) : (
+          <Typography>
+            Ссылка на подписку пока недоступна. Она также придёт в письме на
+            email.
+          </Typography>
+        )}
+        <Typography variant="caption" color="text.secondary">
+          Если письмо не пришло, обратитесь в{" "}
+          <Link component={RouterLink} to="/support">
+            поддержку
+          </Link>
+        </Typography>
+        <Button
+          component={RouterLink}
+          to="/login"
+          variant="contained"
+          color="success"
+          size="large"
+        >
+          Готово
+        </Button>
+      </Stack>
+    </Paper>
   );
 }
