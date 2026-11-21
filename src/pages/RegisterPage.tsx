@@ -6,6 +6,10 @@ import Alert from "@mui/material/Alert";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Container from "@mui/material/Container";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogTitle from "@mui/material/DialogTitle";
 import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import TextField from "@mui/material/TextField";
@@ -89,11 +93,16 @@ export function RegisterPage() {
           </Typography>
         </Box>
 
-        {success ? (
-          <Alert severity="success">
-            <Stack spacing={1}>
-              <Typography variant="body2">Регистрация успешна.</Typography>
-              {/* {subscriptionUrl ? (
+        <Dialog
+          open={success}
+          onClose={() => setSuccess(false)}
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle>Регистрация успешна</DialogTitle>
+          <DialogContent>
+            <Stack spacing={1.5}>
+              {subscriptionUrl ? (
                 <>
                   <Typography variant="body2">
                     Ваша ссылка на подписку с инструкцией по настройке VPN:
@@ -102,6 +111,7 @@ export function RegisterPage() {
                     href={subscriptionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
+                    sx={{ wordBreak: "break-all" }}
                   >
                     {subscriptionUrl}
                   </Link>
@@ -111,18 +121,21 @@ export function RegisterPage() {
                   Ссылка на подписку пока недоступна. Она также придёт в письме
                   на email.
                 </Typography>
-              )} */}
+              )}
               <Typography variant="body2">
                 На ваш email отправлено письмо с инструкцией по настройке VPN.
-                Проверьте папку «Спам», "Рассылки" или другие папки, если письмо
+                Проверьте папку «Спам», «Рассылки» или другие папки, если письмо
                 не пришло.
               </Typography>
               <Typography variant="body2">
-                {`В случае, если письмо не пришло, обратитесь в поддержку`}
+                В случае, если письмо не пришло, обратитесь в поддержку.
               </Typography>
             </Stack>
-          </Alert>
-        ) : null}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setSuccess(false)}>Закрыть</Button>
+          </DialogActions>
+        </Dialog>
         {error ? <Alert severity="error">{error}</Alert> : null}
 
         <Box component="form" onSubmit={onSubmit} noValidate>
